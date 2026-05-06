@@ -1,44 +1,32 @@
 
-
 services:
-
-  mysql:
-    image: mysql:8.0
-    container_name: mysql_db
-    restart: unless-stopped
+  postgres:
+    image: postgres:15
+    container_name: banking_postgres
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "3307:3306"
+      - "5432:5432"         # no conflict since you don't have local Postgres on 5432
     volumes:
-      - db_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   app:
     build: .
-    container_name: springboot_app
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
+    container_name: banking_app
+    depends_on:
+      postgres:
+        condition: service_healthy   # waits for Postgres to be ready before starting
     env_file:
       - .env
-    environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
-    depends_on:
-      mysql:
-        condition: service_healthy
+    ports:
+      - "8080:8080"
 
 volumes:
-  db_data:
+  postgres_data:
