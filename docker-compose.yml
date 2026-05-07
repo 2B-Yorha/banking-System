@@ -1,18 +1,16 @@
-
 services:
-  postgres:
-    image: postgres:15
-    container_name: banking_postgres
+  mysql:
+    image: mysql:8.0
+    container_name: banking_mysql
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"         # no conflict since you don't have local Postgres on 5432
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,12 +19,12 @@ services:
     build: .
     container_name: banking_app
     depends_on:
-      postgres:
-        condition: service_healthy   # waits for Postgres to be ready before starting
+      mysql:
+        condition: service_healthy
     env_file:
       - .env
     ports:
       - "8080:8080"
 
 volumes:
-  postgres_data:
+  mysql_data:
