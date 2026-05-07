@@ -21,4 +21,10 @@ COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080
 
+ENV SPRING_DATASOURCE_URL=""
+ENV SPRING_DATASOURCE_USERNAME=""
+ENV SPRING_DATASOURCE_PASSWORD=""
+ENV JWT_SECRET=""
+ENV JWT_EXPIRATION_MS=""
+
 ENTRYPOINT ["sh", "-c", "java -jar app.jar"]
